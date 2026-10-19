@@ -333,9 +333,9 @@ function mealCard(m, t) {
       : m.final != null ? [starRow(m.final, `별점 5점 중 ${m.final.toFixed(1)}점`), h('span', { class: 'num' }, m.final.toFixed(1))] : [h('span', { class: 'none' }, offline ? '' : 'AI 채점 준비 중')]),
   ]);
   kids.push(head);
-  // 히든 메뉴(통닭·랍스터·스테이크) = 5점 돌파, 5.0 = 전설의 급식
+  // AI 응답의 hidden(통닭·랍스터·스테이크) = 5점 돌파 '100점', legend(5.0 조건) = 전설의 급식
   if (m.hidden) kids.push(h('p', { class: 'badge hid' }, '히든 메뉴 등장! 5점을 뚫은 급식이에요'));
-  else if (m.final != null && m.final >= 4.95) kids.push(h('p', { class: 'badge' }, '전설의 급식'));
+  else if (m.ai && m.ai.legend) kids.push(h('p', { class: 'badge' }, '전설의 급식'));
   if (m.final != null && !m.hidden) {
     const parts = [];
     if (m.ai) parts.push('AI 예상 ', h('b', null, m.ai.adj.toFixed(1)));
