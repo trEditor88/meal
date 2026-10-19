@@ -105,6 +105,7 @@ main{max-width:880px;margin:0 auto;padding:20px 16px 64px;overflow-wrap:anywhere
 .rate button svg{width:28px;height:28px;fill:currentColor}
 .rate button.on{color:var(--blue)}
 .rate .hint{font-size:.875rem;color:var(--muted)}
+.rate.top{margin:12px 0 4px;padding:6px 12px;background:var(--canvas);border-radius:var(--r-md)}
 
 .empty-day{padding:40px 16px;text-align:center;color:var(--muted);background:var(--parchment);border-radius:var(--r-lg)}
 .note{font-size:.875rem;color:var(--muted)}
@@ -213,6 +214,8 @@ const utcOf = (s) => Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8)
 const addDays = (s, n) => fmt(utcOf(s) + n * 86400000);
 const dow = (s) => new Date(utcOf(s)).getUTCDay();
 const todayK = () => fmt(Date.now() + 9 * 3600000);
+const kstMin = () => { const d = new Date(Date.now() + 9 * 3600000); return d.getUTCHours() * 60 + d.getUTCMinutes(); };
+const afterLunch = (ymd, t) => ymd === t && ymd === todayK() && kstMin() >= 12 * 60 + 30;   // 오늘 12:30~23:59
 const monday = (s) => addDays(s, -((dow(s) + 6) % 7));
 const md = (s) => +s.slice(4, 6) + '/' + +s.slice(6, 8);
 
@@ -333,6 +336,9 @@ function mealCard(m, t) {
       : m.final != null ? [starRow(m.final, `별점 5점 중 ${m.final.toFixed(1)}점`), h('span', { class: 'num' }, m.final.toFixed(1))] : [h('span', { class: 'none' }, offline ? '' : 'AI 채점 준비 중')]),
   ]);
   kids.push(head);
+  // 오늘 12:30(한국 시각) 이후엔 별점 칸을 맨 위로 — 휴대폰에서 스크롤 없이 보이게
+  const rateTop = !offline && afterLunch(m.ymd, t);
+  if (rateTop) { const r = rateRow(m, t); r.classList.add('top'); kids.push(r); }
   // AI 응답의 hidden(통닭·랍스터·스테이크) = 5점 돌파 '100점', legend(5.0 조건) = 전설의 급식
   if (m.hidden) kids.push(h('p', { class: 'badge hid' }, '히든 메뉴 등장! 5점을 뚫은 급식이에요'));
   else if (m.ai && m.ai.legend) kids.push(h('p', { class: 'badge' }, '전설의 급식'));
@@ -346,7 +352,7 @@ function mealCard(m, t) {
   }
   if (m.ai && m.ai.reason) kids.push(h('p', { class: 'reason' }, [h('span', { class: 'tag' }, 'AI'), h('span', null, m.ai.reason)]));
   kids.push(h('ul', { class: 'dishes' }, m.dishes.map((d) => dishRow(m, d, t))));
-  if (!offline) kids.push(rateRow(m, t));
+  if (!offline && !rateTop) kids.push(rateRow(m, t));
   return h('section', { class: 'meal', 'aria-label': m.name }, kids);
 }
 
@@ -454,6 +460,8 @@ if (PUSH_OK) curSub().then((s) => { setPushUi(!!s); if (s && auth) api('mealPush
 // 주말이면 다음 주를 먼저
 const startWeek = () => { const t = todayK(); return dow(t) % 6 === 0 ? monday(addDays(t, 2)) : monday(t); };
 addEventListener('hashchange', async () => { if (/^#sso=/.test(location.hash)) { await ssoFromHash(); load(week || startWeek()); } });
+let lunchSide = null;   // 열어 둔 채 12:30 을 넘기면 별점 칸 위치를 다시 그림
+setInterval(() => { if (!data) return; const s = afterLunch(todayK(), data.today); if (lunchSide !== null && s !== lunchSide) render(); lunchSide = s; }, 60000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && data && data.today !== todayK()) { sel = ''; load(startWeek()); } });   // 자정 넘겨 다시 열면 새 날로
 setAuth(auth);
 (async () => { await ssoFromHash(); load(startWeek()); })();
