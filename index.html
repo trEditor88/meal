@@ -166,7 +166,7 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
   <section class="info" id="about">
     <h2>별점은 이렇게 정해져요</h2>
     <ol>
-      <li><b>AI 예상 별점</b> — 식단이 올라오면 AI 가 메뉴를 보고 미리 채점해요(0.1점 단위). 메인 메뉴가 출발점이고, 국·반찬·간식, 자주 안 나오는 특식인지, 버릴 반찬이 없는지를 따져요. 5.0 은 「전설의 급식」, 통닭·랍스터·스테이크가 나오면 5점을 뚫는 「130점」 히든 급식이에요.</li>
+      <li><b>AI 예상 별점</b> — 식단이 올라오면 AI 가 메뉴를 보고 미리 채점해요(0.1점 단위). 메인 메뉴가 출발점이고, 국·반찬·간식, 자주 안 나오는 특식인지, 버릴 반찬이 없는지를 따져요. 5.0 은 「전설의 급식」, 통닭·랍스터·스테이크가 나오면 5점을 뚫는 「100점」 히든 급식이에요.</li>
       <li><b>학생 별점</b> — 먹은 뒤 별점(1~5)을 남기고, 좋았던 메뉴에 하트를 눌러 주세요. 로그인이 필요해요.</li>
       <li><b>점점 학생 입맛으로</b> — 학생 별점이 많을수록 최종 별점이 학생 평균 쪽으로 가고, AI 는 학생들이 좋아한·싫어한 메뉴와 자기가 빗나간 정도를 매일 배워 다음 채점에 반영해요.</li>
     </ol>
@@ -324,7 +324,7 @@ function render() {
   $('days').className = 'days' + (days.length === 7 ? ' seven' : '');
   $('days').replaceChildren(...days.map((d) => {
     const ms = data.meals.filter((m) => m.ymd === d), lunch = ms.find((m) => m.meal === 2) || ms[0];
-    const s = ms.some((m) => m.hidden) ? '★ 130' : lunch && lunch.final != null ? '★ ' + lunch.final.toFixed(1) : ms.length ? ms.length + '끼' : '없음';
+    const s = ms.some((m) => m.hidden) ? '★ 100' : lunch && lunch.final != null ? '★ ' + lunch.final.toFixed(1) : ms.length ? ms.length + '끼' : '없음';
     return h('button', { type: 'button', class: 'day' + (d === t ? ' today' : '') + (ms.length ? '' : ' empty'), 'aria-pressed': String(d === sel), 'aria-label': `${WD[dow(d)]}요일 ${md(d)}${d === t ? ' 오늘' : ''}, ${s}`, onclick: () => { sel = d; render(); } },
       [h('span', { class: 'w' }, d === t ? '오늘' : WD[dow(d)]), h('span', { class: 'd' }, +d.slice(6, 8)), h('span', { class: 's' }, s)]);
   }));
@@ -342,7 +342,7 @@ function mealCard(m, t) {
   const kids = [];
   const head = h('div', { class: 'mealHead' }, [
     h('h2', null, [m.name, m.cal ? h('span', { class: 'kcal' }, Math.round(+m.cal) + ' kcal') : null]),
-    h('div', { class: 'score' }, m.hidden ? [starRow(5, '히든 급식, 130점'), h('span', { class: 'num hid' }, '130점')]
+    h('div', { class: 'score' }, m.hidden ? [starRow(5, '히든 급식, 100점'), h('span', { class: 'num hid' }, '100점')]
       : m.final != null ? [starRow(m.final, `별점 5점 중 ${m.final.toFixed(1)}점`), h('span', { class: 'num' }, m.final.toFixed(1))] : [h('span', { class: 'none' }, offline ? '' : 'AI 채점 준비 중')]),
   ]);
   kids.push(head);
