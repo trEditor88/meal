@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>상현고 급식</title>
+<meta name="description" content="상현고등학교 이번 주 급식, AI 예상 별점과 학생 별점, 내 알레르기 경고를 한눈에 봅니다.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --canvas:#FFFFFF; --parchment:#F5F5F7; --pearl:#FAFAFC;
+  --ink:#1D1D1F; --muted:#6E6E73;
+  --hairline:rgba(0,0,0,0.10); --border:#E0E0E0;
+  --blue:#0066CC; --blue-focus:#0071E3;
+  --green:#15803D; --red:#C0392B;
+  --r-sm:8px; --r-md:11px; --r-lg:18px; --r-pill:9999px;
+  font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--canvas);color:var(--ink);font-size:1rem;line-height:1.6;min-height:100vh}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--blue-focus);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+header{position:sticky;top:0;z-index:20;height:60px;display:flex;align-items:center;gap:12px;padding:0 16px;
+  background:rgba(255,255,255,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--hairline)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.0625rem;color:var(--ink);text-decoration:none;white-space:nowrap}
+.logo img{width:32px;height:32px}
+header .sp{flex:1}
+.who{font-size:.875rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border-radius:var(--r-pill);
+  border:1px solid var(--border);background:var(--pearl);color:var(--ink);font-size:.9375rem;font-weight:500;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:#C7C7CC}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#0058B0}
+.btn.sm{min-height:34px;padding:0 12px;font-size:.875rem}
+.btn.icon{width:40px;padding:0}
+
+main{max-width:880px;margin:0 auto;padding:20px 16px 64px;overflow-wrap:anywhere}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:8px 0 18px}
+.hero h1{margin:0;font-size:clamp(1.6rem,4.5vw,2.25rem);font-weight:700;letter-spacing:-.02em;line-height:1.25}
+.hero p{margin:4px 0 0;color:var(--muted);font-size:.9375rem}
+.weekNav{display:flex;align-items:center;gap:6px}
+.weekNav .lbl{min-width:118px;text-align:center;font-weight:600;font-size:.9375rem}
+
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:22px}
+.days.seven{grid-template-columns:repeat(7,1fr)}
+.day{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 2px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--canvas);min-width:0}
+.day .w{font-size:.8125rem;color:var(--muted)}
+.day .d{font-size:1.125rem;font-weight:700;line-height:1.2}
+.day .s{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.day.today .w{color:var(--blue);font-weight:600}
+.day[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.day[aria-pressed="true"] .w,.day[aria-pressed="true"] .s{color:rgba(255,255,255,.88)}
+.day.empty .d{color:var(--muted)}
+.day[aria-pressed="true"].empty .d{color:#fff}
+
+.meal{background:var(--parchment);border-radius:var(--r-lg);padding:20px;margin-bottom:16px}
+.mealHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mealHead h2{margin:0;font-size:1.25rem;font-weight:700}
+.mealHead .kcal{font-size:.875rem;color:var(--muted);font-weight:400;margin-left:6px}
+.score{display:flex;align-items:center;gap:8px}
+.score .num{font-size:1.75rem;font-weight:700;line-height:1;letter-spacing:-.02em}
+.score .none{font-size:.875rem;color:var(--muted)}
+.stars{position:relative;display:inline-block;line-height:0;color:var(--border)}
+.stars .fill{position:absolute;inset:0 auto 0 0;overflow:hidden;color:var(--blue);white-space:nowrap}
+.stars svg{width:20px;height:20px;fill:currentColor}
+.basis{margin:8px 0 0;font-size:.875rem;color:var(--muted)}
+.basis b{color:var(--ink);font-weight:600}
+.reason{margin:10px 0 0;padding:10px 12px;background:var(--canvas);border-radius:var(--r-md);font-size:.9375rem;display:flex;gap:8px;align-items:flex-start}
+.reason>span:last-child{min-width:0;overflow-wrap:anywhere}
+.reason .tag{flex:none;font-size:.75rem;font-weight:700;color:var(--blue);border:1px solid var(--blue);border-radius:var(--r-pill);padding:0 7px;line-height:20px;margin-top:2px}
+
+.dishes{list-style:none;margin:14px 0 0;padding:0;background:var(--canvas);border-radius:var(--r-md)}
+.dish{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--hairline)}
+.dish:first-child{border-top:0}
+.dish .nm{flex:1;min-width:0}
+.dish .nm .t{font-size:1rem;font-weight:500;word-break:keep-all;overflow-wrap:anywhere}
+.dish .nm .best{font-size:.75rem;font-weight:600;color:var(--blue);margin-left:6px;white-space:nowrap}
+.dish .al{display:block;font-size:.75rem;color:var(--muted)}
+.dish.warn .t{color:var(--red)}
+.dish .al .bad{color:var(--red);font-weight:600}
+.like{display:inline-flex;align-items:center;gap:4px;min-height:36px;min-width:52px;padding:0 10px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--canvas);font-size:.875rem;color:var(--muted)}
+.like svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+.like[aria-pressed="true"]{color:var(--blue);border-color:var(--blue)}
+.like[aria-pressed="true"] svg{fill:currentColor}
+
+.rate{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.rate .q{font-size:.9375rem;font-weight:500}
+.rate .row{display:flex;gap:2px}
+.rate button{width:40px;height:40px;border:0;background:none;padding:6px;color:var(--border);border-radius:var(--r-sm)}
+.rate button svg{width:28px;height:28px;fill:currentColor}
+.rate button.on{color:var(--blue)}
+.rate .hint{font-size:.875rem;color:var(--muted)}
+
+.empty-day{padding:40px 16px;text-align:center;color:var(--muted);background:var(--parchment);border-radius:var(--r-lg)}
+.note{font-size:.875rem;color:var(--muted)}
+.loading{padding:40px 0;text-align:center;color:var(--muted)}
+
+section.info{margin-top:40px;padding-top:24px;border-top:1px solid var(--hairline)}
+section.info h2{font-size:1.125rem;margin:0 0 8px}
+section.info p,section.info li{font-size:.9375rem;color:var(--muted)}
+section.info ol{padding-left:20px;margin:8px 0}
+
+dialog{border:0;border-radius:var(--r-lg);padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dlg{padding:20px}
+.dlg h2{margin:0 0 4px;font-size:1.25rem}
+.alGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:14px 0}
+.alGrid label{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-md);font-size:.9375rem;cursor:pointer}
+.alGrid input{width:18px;height:18px;accent-color:var(--blue)}
+.dlgBtns{display:flex;justify-content:flex-end;gap:8px}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--r-pill);font-size:.9375rem;z-index:50;max-width:calc(100vw - 32px);text-align:center}
+@media (min-width:640px){ header{padding:0 24px} main{padding:28px 24px 80px} .alGrid{grid-template-columns:repeat(3,1fr)} .day .s{font-size:.8125rem} }
+@media (max-width:479px){ .who{display:none} .logo{font-size:1rem} }
+@media (max-width:380px){ .days.seven .s{display:none} .weekNav .lbl{min-width:96px;font-size:.875rem} }
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.6 9.4l6.5-.9z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.5 1.1 4.8 2.9 1.3-1.8 2.8-2.9 4.8-2.9 3.6 0 5.7 3.5 4.5 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></symbol>
+</svg>
+<header>
+  <a class="logo" href="./"><img src="icon.svg" alt="">상현고 급식</a>
+  <span class="sp"></span>
+  <button class="btn sm" type="button" id="alBtn"><svg class="i"><use href="#i-alert"/></svg><span>알레르기</span></button>
+  <span class="who" id="who"></span>
+  <a class="btn sm primary" id="loginBtn" href="#">로그인</a>
+  <button class="btn sm" type="button" id="logoutBtn" hidden>로그아웃</button>
+</header>
+<main>
+  <div class="hero">
+    <div>
+      <h1 id="title">이번 주 급식</h1>
+      <p>상현고등학교 · AI 예상 별점과 학생 별점</p>
+    </div>
+    <div class="weekNav">
+      <button class="btn icon" type="button" id="prevW" aria-label="지난주"><svg class="i"><use href="#i-left"/></svg></button>
+      <span class="lbl" id="weekLbl"></span>
+      <button class="btn icon" type="button" id="nextW" aria-label="다음 주"><svg class="i"><use href="#i-right"/></svg></button>
+      <button class="btn sm" type="button" id="todayBtn">오늘</button>
+    </div>
+  </div>
+  <div class="days" id="days" role="group" aria-label="요일 고르기"></div>
+  <div id="list" aria-live="polite"><div class="loading">급식을 불러오는 중…</div></div>
+
+  <section class="info" id="about">
+    <h2>별점은 이렇게 정해져요</h2>
+    <ol>
+      <li><b>AI 예상 별점</b> — 식단이 올라오면 AI 가 메뉴를 보고 학생들이 얼마나 좋아할지 미리 채점해요.</li>
+      <li><b>학생 별점</b> — 먹은 뒤 별점(1~5)을 남기고, 좋았던 메뉴에 하트를 눌러 주세요. 로그인이 필요해요.</li>
+      <li><b>점점 학생 입맛으로</b> — 학생 별점이 많을수록 최종 별점이 학생 평균 쪽으로 가고, AI 는 학생들이 좋아한·싫어한 메뉴와 자기가 빗나간 정도를 매일 배워 다음 채점에 반영해요.</li>
+    </ol>
+    <p id="modelInfo"></p>
+    <p>식단 출처: 나이스 교육정보 개방 포털. 알레르기 번호는 학교가 올린 표시를 따르며, 정확한 성분은 급식실에 확인하세요.</p>
+  </section>
+</main>
+
+<dialog id="alDlg" aria-labelledby="alTitle">
+  <form class="dlg" method="dialog" id="alForm">
+    <h2 id="alTitle">내 알레르기</h2>
+    <p class="note">고른 재료가 들어간 메뉴를 빨갛게 표시해요. 이 기기에만 저장돼요.</p>
+    <div class="alGrid" id="alGrid"></div>
+    <div class="dlgBtns"><button class="btn" type="button" id="alClear">모두 해제</button><button class="btn primary" value="ok">저장</button></div>
+  </form>
+</dialog>
+<div id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const LOCALHOST = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+// 서버(시험지 서버 exam-api 의 meal* 동작). 내 PC 에서 열면 localStorage 'meal:api'·'meal:portal' 로 바꿀 수 있음
+const API = (LOCALHOST && lsGet('meal:api')) || 'https://exam-api.dawn-sea-4052.workers.dev';
+const PORTAL = (LOCALHOST && lsGet('meal:portal')) || 'https://heoworks.pages.dev/';
+const SCHOOL = { atpt: 'J10', code: '7531014' };
+const AK = 'meal:auth', ALK = 'meal:allergy';
+const ALLERGY = ['', '난류', '우유', '메밀', '땅콩', '대두', '밀', '고등어', '게', '새우', '돼지고기', '복숭아', '토마토', '아황산류', '호두', '닭고기', '쇠고기', '오징어', '조개류', '잣'];
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+
+let auth = (() => { try { const a = JSON.parse(lsGet(AK) || 'null'); return a && a.token && a.exp > Date.now() ? a : null; } catch (e) { return null; } })();
+let myAl = (() => { try { const v = JSON.parse(lsGet(ALK) || '[]'); return Array.isArray(v) ? v.filter((n) => Number.isInteger(n) && n >= 1 && n <= 19) : []; } catch (e) { return []; } })();
+let week = null, sel = '', data = null, offline = false, loadSeq = 0;
+
+function h(tag, attrs, kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v; else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of [].concat(kids == null ? [] : kids)) if (c != null && c !== false) el.append(c.nodeType ? c : String(c));
+  return el;
+}
+const svgUse = (id, cls) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); if (cls) s.setAttribute('class', cls); s.setAttribute('aria-hidden', 'true'); const u = document.createElementNS('http://www.w3.org/2000/svg', 'use'); u.setAttribute('href', '#' + id); s.append(u); return s; };
+let toastT = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600); }
+
+// 날짜(YYYYMMDD, 한국 시각)
+const pad = (n) => String(n).padStart(2, '0');
+const fmt = (t) => { const d = new Date(t); return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()); };
+const utcOf = (s) => Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8));
+const addDays = (s, n) => fmt(utcOf(s) + n * 86400000);
+const dow = (s) => new Date(utcOf(s)).getUTCDay();
+const todayK = () => fmt(Date.now() + 9 * 3600000);
+const monday = (s) => addDays(s, -((dow(s) + 6) % 7));
+const md = (s) => +s.slice(4, 6) + '/' + +s.slice(6, 8);
+
+async function api(action, body) {
+  try {
+    const res = await fetch(API, { method: 'POST', body: JSON.stringify(Object.assign({ action }, body || {})), cache: 'no-store' });
+    const r = await res.json();
+    if (r && r.error === 'bad_token' && action !== 'ssoRedeem') setAuth(null);
+    return r || { ok: false, error: 'server' };
+  } catch (e) { return { ok: false, error: 'network' }; }
+}
+const ERRS = { network: '서버에 연결하지 못했어요', bad_token: '로그인이 끝났어요. 다시 로그인해 주세요', sso_expired: '로그인 코드가 만료됐어요. 다시 로그인해 주세요', not_yet: '별점은 먹은 날부터 남길 수 있어요', too_old: '한 달 지난 급식은 바꿀 수 없어요', too_far: '2주 뒤 급식까지만 하트를 누를 수 있어요', req_limit: '오늘은 더 바꿀 수 없어요', not_found: '식단이 바뀌었어요. 새로고침해 주세요' };
+const errMsg = (e) => ERRS[e] || '오류가 났어요(' + e + ')';
+
+function setAuth(a) {
+  auth = a; lsSet(AK, a ? JSON.stringify(a) : null);
+  $('who').textContent = a ? (a.user.name || a.user.id) + ' 님' : '';
+  $('loginBtn').hidden = !!a; $('logoutBtn').hidden = !a;
+}
+async function ssoFromHash() {
+  const m = location.hash.match(/^#sso=([A-Za-z0-9]{40})$/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  const r = await api('ssoRedeem', { svc: 'meal', code: m[1] });
+  if (r.ok && r.token) { setAuth({ token: r.token, user: r.user, exp: Date.now() + 29.5 * 86400000 }); toast((r.user.name || r.user.id) + ' 님, 반가워요'); }
+  else toast(errMsg(r.error));
+}
+
+// 서버가 안 될 때: 나이스에서 바로(별점 없이) — 키 없이 한 번에 5줄이라 하루씩
+function parseDishes(s) {
+  const out = [];
+  for (let line of String(s || '').split(/<br\s*\/?>/i)) {
+    line = line.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&');
+    let a = [];
+    const m = line.match(/\(\s*([\d.,\s]+?)\s*\)\s*$/);
+    if (m) { a = [...new Set(m[1].split(/[.,\s]+/).map(Number).filter((x) => Number.isInteger(x) && x >= 1 && x <= 19))].sort((x, y) => x - y); line = line.slice(0, m.index); }
+    const n = line.replace(/[*#]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+    if (n) out.push({ n, a, likes: 0, mine: false });
+  }
+  return out;
+}
+async function neisWeek(from) {
+  const days = [0, 1, 2, 3, 4].map((i) => addDays(from, i)), meals = [];
+  await Promise.all(days.map(async (d) => {
+    try {
+      const r = await (await fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&pIndex=1&pSize=5&ATPT_OFCDC_SC_CODE=${SCHOOL.atpt}&SD_SCHUL_CODE=${SCHOOL.code}&MLSV_YMD=${d}`)).json();
+      for (const x of (r.mealServiceDietInfo && r.mealServiceDietInfo[1] && r.mealServiceDietInfo[1].row) || []) {
+        meals.push({ ymd: d, meal: +x.MMEAL_SC_CODE, name: x.MMEAL_SC_NM, cal: String(x.CAL_INFO || '').replace(/[^\d.]/g, ''), dishes: parseDishes(x.DDISH_NM), ai: null, users: { n: 0, avg: 0 }, final: null, myStar: 0 });
+      }
+    } catch (e) {}
+  }));
+  meals.sort((p, q) => (p.ymd + p.meal < q.ymd + q.meal ? -1 : 1));
+  return { ok: true, from, to: addDays(from, 6), today: todayK(), meals, model: null, offline: true };
+}
+
+async function load(from, quiet) {
+  const seq = ++loadSeq;
+  week = from;
+  if (!quiet) $('list').replaceChildren(h('div', { class: 'loading' }, '급식을 불러오는 중…'));
+  renderWeekNav();
+  let r = await api('mealWeek', { from, token: auth ? auth.token : undefined });
+  if (seq !== loadSeq) return;
+  if (r.ok && r.loggedOut) setAuth(null);
+  if (r.error === 'bad_date') { data = null; $('days').replaceChildren(); $('list').replaceChildren(h('div', { class: 'empty-day' }, '이 기간의 급식은 볼 수 없어요. 「오늘」을 눌러 돌아가세요.')); $('todayBtn').hidden = false; return; }
+  offline = !r.ok;
+  if (!r.ok) { r = await neisWeek(from); if (seq !== loadSeq) return; }
+  data = r;
+  const days = dayList();
+  if (!days.includes(sel)) {
+    const t = todayK();
+    sel = days.includes(t) ? t : (days.find((d) => r.meals.some((m) => m.ymd === d)) || days[0]);
+  }
+  render();
+}
+function dayList() {
+  const all = [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(week, i));
+  const weekendMeals = data && data.meals.some((m) => dow(m.ymd) % 6 === 0);
+  return weekendMeals ? all : all.slice(0, 5);
+}
+
+function renderWeekNav() {
+  const t = todayK(), thisMon = monday(t);
+  $('weekLbl').textContent = md(week) + ' ~ ' + md(addDays(week, 4));
+  $('title').textContent = week === thisMon ? '이번 주 급식' : week === addDays(thisMon, 7) ? '다음 주 급식' : week === addDays(thisMon, -7) ? '지난주 급식' : md(week) + ' 주 급식';
+  $('todayBtn').hidden = week === thisMon || (dow(t) % 6 === 0 && week === addDays(thisMon, 7));
+}
+
+function starRow(score, label) {
+  const pct = Math.max(0, Math.min(100, (score / 5) * 100));
+  const five = () => [1, 2, 3, 4, 5].map(() => svgUse('i-star'));
+  return h('span', { class: 'stars', role: 'img', 'aria-label': label }, [...five(), h('span', { class: 'fill', style: `width:${pct}%` }, five())]);
+}
+const avgOf = (ms) => { const v = ms.filter((m) => m.final != null); return v.length ? v.reduce((s, m) => s + m.final, 0) / v.length : null; };
+
+function render() {
+  renderWeekNav();
+  const t = data.today || todayK(), days = dayList();
+  $('days').className = 'days' + (days.length === 7 ? ' seven' : '');
+  $('days').replaceChildren(...days.map((d) => {
+    const ms = data.meals.filter((m) => m.ymd === d), lunch = ms.find((m) => m.meal === 2) || ms[0];
+    const s = lunch && lunch.final != null ? '★ ' + lunch.final.toFixed(1) : ms.length ? ms.length + '끼' : '없음';
+    return h('button', { type: 'button', class: 'day' + (d === t ? ' today' : '') + (ms.length ? '' : ' empty'), 'aria-pressed': String(d === sel), 'aria-label': `${WD[dow(d)]}요일 ${md(d)}${d === t ? ' 오늘' : ''}, ${s}`, onclick: () => { sel = d; render(); } },
+      [h('span', { class: 'w' }, d === t ? '오늘' : WD[dow(d)]), h('span', { class: 'd' }, +d.slice(6, 8)), h('span', { class: 's' }, s)]);
+  }));
+  const ms = data.meals.filter((m) => m.ymd === sel);
+  const box = [];
+  if (offline) box.push(h('p', { class: 'note' }, '별점 서버에 연결하지 못해 식단만 보여 줘요.'));
+  if (!ms.length) box.push(h('div', { class: 'empty-day' }, `${md(sel)}(${WD[dow(sel)]})에는 급식 정보가 없어요.`));
+  for (const m of ms) box.push(mealCard(m, t));
+  $('list').replaceChildren(...box);
+  const mo = data.model;
+  $('modelInfo').textContent = mo && mo.votes ? `지금까지 학생 별점 ${mo.votes}개(${mo.meals}끼)를 배웠어요. AI 가 학생보다 ${mo.bias > 0 ? '낮게' : mo.bias < 0 ? '높게' : '비슷하게'} 주던 만큼(${mo.bias > 0 ? '+' : ''}${mo.bias}점) 보정해서 보여 줘요.` + (mo.liked && mo.liked.length ? ` 인기 메뉴: ${mo.liked.join(', ')}.` : '') : '아직 학생 별점이 없어서 AI 예상 별점만 보여 줘요.';
+}
+
+function mealCard(m, t) {
+  const kids = [];
+  const head = h('div', { class: 'mealHead' }, [
+    h('h2', null, [m.name, m.cal ? h('span', { class: 'kcal' }, Math.round(+m.cal) + ' kcal') : null]),
+    h('div', { class: 'score' }, m.final != null ? [starRow(m.final, `별점 5점 중 ${m.final.toFixed(1)}점`), h('span', { class: 'num' }, m.final.toFixed(1))] : [h('span', { class: 'none' }, offline ? '' : 'AI 채점 준비 중')]),
+  ]);
+  kids.push(head);
+  if (m.final != null) {
+    const parts = [];
+    if (m.ai) parts.push('AI 예상 ', h('b', null, m.ai.adj.toFixed(1)));
+    if (m.ai && m.users.n) parts.push(' · ');
+    if (m.users.n) parts.push(`학생 ${m.users.n}명 평균 `, h('b', null, m.users.avg.toFixed(1)));
+    if (!m.users.n) parts.push(' · 아직 학생 별점 없음');
+    kids.push(h('p', { class: 'basis' }, parts));
+  }
+  if (m.ai && m.ai.reason) kids.push(h('p', { class: 'reason' }, [h('span', { class: 'tag' }, 'AI'), h('span', null, m.ai.reason)]));
+  kids.push(h('ul', { class: 'dishes' }, m.dishes.map((d) => dishRow(m, d, t))));
+  if (!offline) kids.push(rateRow(m, t));
+  return h('section', { class: 'meal', 'aria-label': m.name }, kids);
+}
+
+function dishRow(m, d, t) {
+  const bad = d.a.filter((n) => myAl.includes(n));
+  const al = d.a.length ? h('span', { class: 'al' }, [bad.length ? h('span', { class: 'bad' }, '주의: ' + bad.map((n) => ALLERGY[n]).join('·') + ' ') : null, '알레르기 ' + d.a.join('.')]) : null;
+  const canLike = !offline && m.ymd >= addDays(t, -30) && m.ymd <= addDays(t, 14);
+  const like = canLike ? h('button', { type: 'button', class: 'like', 'aria-pressed': String(d.mine), 'aria-label': `${d.n} 좋아요 ${d.likes}개${d.mine ? ', 누름' : ''}`, onclick: () => toggleLike(m, d) }, [svgUse('i-heart'), String(d.likes || '')]) : null;
+  return h('li', { class: 'dish' + (bad.length ? ' warn' : '') }, [
+    h('div', { class: 'nm' }, [h('span', { class: 't' }, d.n), m.ai && m.ai.best === d.n ? h('span', { class: 'best' }, 'AI 추천') : null, al]),
+    like,
+  ]);
+}
+
+function rateRow(m, t) {
+  if (m.ymd > t) return h('div', { class: 'rate' }, h('span', { class: 'hint' }, '먹은 날부터 별점을 남길 수 있어요. 기대되는 메뉴엔 하트를 눌러 주세요.'));
+  if (m.ymd < addDays(t, -30)) return h('div', { class: 'rate' }, h('span', { class: 'hint' }, '한 달 지난 급식은 별점을 바꿀 수 없어요.'));
+  if (!auth) return h('div', { class: 'rate' }, [h('span', { class: 'q' }, '먹어 봤나요?'), h('a', { class: 'btn sm primary', href: loginUrl() }, '로그인하고 별점 남기기')]);
+  const row = h('div', { class: 'row', role: 'group', 'aria-label': '내 별점' }, [1, 2, 3, 4, 5].map((v) => h('button', { type: 'button', class: v <= m.myStar ? 'on' : '', 'aria-label': `${v}점${v === m.myStar ? ', 내 별점(다시 누르면 취소)' : ''}`, onclick: () => rate(m, v === m.myStar ? 0 : v) }, svgUse('i-star'))));
+  return h('div', { class: 'rate' }, [h('span', { class: 'q' }, m.myStar ? '내 별점' : '먹어 봤나요?'), row, m.myStar ? null : h('span', { class: 'hint' }, '별을 눌러 평가해 주세요')]);
+}
+
+const loginUrl = () => PORTAL + '#login=meal';
+let busy = false;
+async function rate(m, v) {
+  if (busy) { toast('잠시만요, 저장하는 중이에요'); return; } busy = true;
+  const old = m.myStar; m.myStar = v; render();
+  const r = await api('mealVote', { token: auth && auth.token, ymd: m.ymd, meal: m.meal, dish: '', val: v });
+  busy = false;
+  if (!r.ok) { m.myStar = old; render(); toast(errMsg(r.error)); return; }
+  m.users = r.users;
+  toast(v ? '별점을 남겼어요. 고마워요!' : '별점을 지웠어요');
+  load(week, true);   // 최종 별점은 서버가 다시 계산(목록을 비우지 않고 조용히)
+}
+async function toggleLike(m, d) {
+  if (!auth) { toast('하트를 누르려면 로그인해 주세요'); setTimeout(() => { location.href = loginUrl(); }, 900); return; }
+  if (busy) { toast('잠시만요, 저장하는 중이에요'); return; } busy = true;
+  const v = d.mine ? 0 : 1;
+  d.mine = !!v; d.likes = Math.max(0, d.likes + (v ? 1 : -1)); render();
+  const r = await api('mealVote', { token: auth.token, ymd: m.ymd, meal: m.meal, dish: d.n, val: v });
+  busy = false;
+  if (!r.ok) { d.mine = !v; d.likes = Math.max(0, d.likes + (v ? -1 : 1)); render(); toast(errMsg(r.error)); return; }
+  d.likes = r.likes; render();
+}
+
+// 알레르기 설정
+function openAllergy() {
+  $('alGrid').replaceChildren(...ALLERGY.map((nm, i) => i ? h('label', null, [h('input', { type: 'checkbox', value: String(i), checked: myAl.includes(i) }), nm]) : null).filter(Boolean));
+  $('alDlg').showModal();
+}
+$('alBtn').onclick = openAllergy;
+$('alClear').onclick = () => { for (const c of $('alGrid').querySelectorAll('input')) c.checked = false; };
+$('alDlg').addEventListener('close', () => {
+  if ($('alDlg').returnValue !== 'ok') return;
+  myAl = [...$('alGrid').querySelectorAll('input:checked')].map((c) => +c.value);
+  lsSet(ALK, JSON.stringify(myAl));
+  $('alBtn').querySelector('span').textContent = myAl.length ? `알레르기 ${myAl.length}` : '알레르기';
+  if (data) render();
+  toast(myAl.length ? '고른 재료가 든 메뉴를 빨갛게 표시해요' : '알레르기 표시를 껐어요');
+});
+$('alBtn').querySelector('span').textContent = myAl.length ? `알레르기 ${myAl.length}` : '알레르기';
+
+$('prevW').onclick = () => load(addDays(week, -7));
+$('nextW').onclick = () => load(addDays(week, 7));
+$('todayBtn').onclick = () => { sel = ''; load(startWeek()); };
+$('loginBtn').href = loginUrl();
+$('logoutBtn').onclick = async () => { const t = auth && auth.token; setAuth(null); if (t) await api('mealLogout', { token: t }); toast('로그아웃했어요'); load(week); };
+// 주말이면 다음 주를 먼저
+const startWeek = () => { const t = todayK(); return dow(t) % 6 === 0 ? monday(addDays(t, 2)) : monday(t); };
+addEventListener('hashchange', async () => { if (/^#sso=/.test(location.hash)) { await ssoFromHash(); load(week || startWeek()); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && data && data.today !== todayK()) { sel = ''; load(startWeek()); } });   // 자정 넘겨 다시 열면 새 날로
+setAuth(auth);
+(async () => { await ssoFromHash(); load(startWeek()); })();
+})();
+</script>
+</body>
+</html>
