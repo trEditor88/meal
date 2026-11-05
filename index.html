@@ -183,7 +183,7 @@ const LOCALHOST = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
 // 서버(시험지 서버 exam-api 의 meal* 동작). 내 PC 에서 열면 localStorage 'meal:api'·'meal:portal' 로 바꿀 수 있음
-const API = (LOCALHOST && lsGet('meal:api')) || 'https://exam-api.dawn-sea-4052.workers.dev';
+const API = (LOCALHOST && lsGet('meal:api')) || 'https://heoworks.pages.dev/api';
 const PORTAL = (LOCALHOST && lsGet('meal:portal')) || 'https://heoworks.pages.dev/';
 const SCHOOL = { atpt: 'J10', code: '7531014' };
 const AK = 'meal:auth', ALK = 'meal:allergy';

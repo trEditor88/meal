@@ -2,7 +2,7 @@
    서버는 학교 가는 날 8:30 에 내용 없는 푸시만 보낸다. 받으면 mealToday(로그인 없이 읽는 오늘 급식 요약)를 불러
    '오늘 급식 ★4.3 / 메뉴1 · 메뉴2' 를 띄운다. 실패하면 "오늘 급식을 확인해 보세요" */
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(self.location.hostname);
-const API = (LOCAL && new URL(self.location.href).searchParams.get('api')) || 'https://exam-api.dawn-sea-4052.workers.dev';
+const API = (LOCAL && new URL(self.location.href).searchParams.get('api')) || 'https://heoworks.pages.dev/api';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('push', (e) => {
